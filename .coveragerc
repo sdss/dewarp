@@ -1,0 +1,8 @@
+[run]
+branch = true
+
+[report]
+omit =
+    python/dewarp/etc/*
+    python/dewarp/utils/*
+    python/dewarp/tests/*
