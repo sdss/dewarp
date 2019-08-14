@@ -17,7 +17,7 @@ import sys
 
 # The NAME variable should be of the format "sdss-dewarp".
 # Please check your NAME adheres to that format.
-NAME = 'dewarp'
+NAME = 'sdss-dewarp'
 VERSION = '0.0.0'
 RELEASE = 'dev' in VERSION
 
@@ -45,8 +45,7 @@ def run(packages, install_requires):
               'Natural Language :: English',
               'Operating System :: OS Independent',
               'Programming Language :: Python',
-              'Programming Language :: Python :: 2.6',
-              'Programming Language :: Python :: 2.7',
+              'Programming Language :: Python :: 3',
               'Topic :: Documentation :: Sphinx',
               'Topic :: Software Development :: Libraries :: Python Modules',
           ],
