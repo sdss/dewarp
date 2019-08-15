@@ -12,12 +12,12 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import opticsmath
-import ioutils
+from utils import opticsmath
+from utils import ioutils
 
 #detect warp
 ideal = ioutils.fiducial_xys_from_file('fps_RTConfig.txt')
-ideal = opticsmath.unitize_xys(ideal) #this should actually use a known constant in the file, if file is in mm, divide by radius in mm
+ideal = opticsmath.unitize_xys(ideal, None)
 import random
 fakeactual = [a+random.uniform(-.05,.05) for a in ideal]
 coefs = opticsmath.warpcoefs()
