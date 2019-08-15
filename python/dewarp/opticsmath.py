@@ -16,13 +16,15 @@ import numpy
 import math
 
 class warpcoefs:
-    zernike_xypolycoefs = {(0,0):numpy.array([[1.]]),(1,-1):numpy.array([[0.,1],[0,0]]),(1,1):numpy.array([[0.,0],[1,0]]),(2,2):numpy.array([[0.,0,-1],[0,0,0],[1,0,0]]),(2,-2):numpy.array([[0.,0,0],[0,2,0],[0,0,0]]),(2,0):numpy.array([[-1.,0,2],[0,0,0],[2,0,0]])} #for key (x,y) we have bivariate polynomial for zernike, increasing row is x and increasing column is y
-    tx_xypolycoefs = numpy.array([[0.,0],[1,0]]) #a square 2d array of scalar coefficients
-    ty_xypolycoefs = numpy.array([[0.,1],[0,0]]) #a square 2d array of scalar coefficients
     
     def __init__(self, fromxys=None, toxys=None, maxerr=None):
         if fromxys is not None and toxys is not None and maxerr is not None:
             self.computeweights(fromxys, toxys, maxerr)
+    
+    #for key (x,y) we have bivariate polynomial for zernike, increasing row is x and increasing column is y
+    zernike_xypolycoefs = {(0,0):numpy.array([[1.]]),(1,-1):numpy.array([[0.,1],[0,0]]),(1,1):numpy.array([[0.,0],[1,0]]),(2,2):numpy.array([[0.,0,-1],[0,0,0],[1,0,0]]),(2,-2):numpy.array([[0.,0,0],[0,2,0],[0,0,0]]),(2,0):numpy.array([[-1.,0,2],[0,0,0],[2,0,0]])}
+    tx_xypolycoefs = numpy.array([[0.,0],[1,0]]) #a square 2d array of scalar coefficients
+    ty_xypolycoefs = numpy.array([[0.,1],[0,0]]) #a square 2d array of scalar coefficients
     
     def get_zernike_xypolycoefs(self, n, m):
         """Gets the (n,m)th zernike polynomial (Noll numbering)
@@ -233,6 +235,30 @@ class warpcoefs:
             self.tx_xypolycoefs[:c[0].shape[0]:,:c[0].shape[1]:] += weights[i]*c[0]
             self.ty_xypolycoefs[:c[1].shape[0]:,:c[1].shape[1]:] += weights[i]*c[1]
         return avgerr
+    
+    def randomizetransform(self, degree, coefsrange=.01):
+        """Assigns random coefficients to each basis function with n not more than degree
+        
+        calls extendbasis to retrive basis functions
+        
+        applytransform(fromxys) should yield a slightly distorted version of fromxys
+        
+        Parameters:
+            degree (int):
+                the maximum n of the basis functions included in warping
+        """
+        basiselements = []
+        weights = []
+        for n in range(1,degree+1,1):
+            newbasiselements = self.extendbasis(n)
+            basiselements.extend(newbasiselements)
+            weights.extend(numpy.random.uniform(-coefsrange,coefsrange,(len(newbasiselements))))
+        self.tx_xypolycoefs = numpy.zeros((max([c[0].shape[0] for c in basiselements]),max([c[0].shape[1] for c in basiselements])))
+        self.ty_xypolycoefs = numpy.zeros((max([c[1].shape[0] for c in basiselements]),max([c[1].shape[1] for c in basiselements])))
+        for i in range(len(basiselements)):
+            c = basiselements[i]
+            self.tx_xypolycoefs[:c[0].shape[0]:,:c[0].shape[1]:] += weights[i]*c[0]
+            self.ty_xypolycoefs[:c[1].shape[0]:,:c[1].shape[1]:] += weights[i]*c[1]
     
     def applytransform(self, xys):
         """Hopefully dewarps xys
