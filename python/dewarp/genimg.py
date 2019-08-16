@@ -19,12 +19,15 @@ import time
 from .utils import opticsmath
 from .utils import ioutils
 
-def genimg(width=8192, height=5120, fpslayoutfilename='fps_RTConfig.txt', outfilename='simulatedwarpedfiducials.fits', bgIntensity=3, bgGaussMean=2, bgGaussStdDev=1, fidSuperGaussPeak_min=190, fidSuperGaussPeak_max=210, fidSuperGaussAWAM_min=1, fidSuperGaussAWAM_max=2, fidSuperGaussHWHM_dmin=1, fidSuperGaussHWHM_dmax=4, maxn=5):
+def genimg(width=8192, height=5120, radius=None, fpslayoutfilename='fps_RTConfig.txt', outfilename='simulatedwarpedfiducials.fits', bgIntensity=3, bgGaussMean=2, bgGaussStdDev=1, fidSuperGaussPeak_min=190, fidSuperGaussPeak_max=210, fidSuperGaussAWAM_min=1, fidSuperGaussAWAM_max=2, fidSuperGaussHWHM_dmin=1, fidSuperGaussHWHM_dmax=4, maxn=5):
     """Draws a warped theoretical image of fiducials
     
     Parameters:
         width,height (int):
-            dimensions of the generated image
+            dimensions of the generated image in pixels
+        radius (float):
+            the radius within which all fiducials reside (in units of fiducials, probably mm)
+            if None, we choos a radius so that all of them fit
         fpslayoutfilename (str):
             a path to a config file containing fiducial positions (probably has '.txt' extension)
         outfilename (str):
@@ -35,18 +38,25 @@ def genimg(width=8192, height=5120, fpslayoutfilename='fps_RTConfig.txt', outfil
             the mean value for Gaussian noise in addition to bgIntensity, applied before Poisson noising
         bgGaussStdDev (float):
             the standard deviation for Gaussian noise in addition to bgIntensity, applied before Poisson noising
+            mustn't be negative
         fidSuperGaussPeak_min (float):
             the greatest lower bound of the uniform distribution of peak intensities for each fiducial randomized
+            must not be larger than fidSuperGaussPeak_max
         fidSuperGaussPeak_max (float):
             the least upper bound of the uniform distribution of peak intensities for each fiducial randomized
+            must not be smaller than fidSuperGaussPeak_min
         fidSuperGaussAWAM_min (float):
             the least upper bound of the uniform distribution of almost-width-almost-maximum intensities (how many pixels to the side is the supergaussian 255/256 times maximum intensity) for each fiducial randomized
+            must not be larger than fidSuperGaussAWAM_max
         fidSuperGaussAWAM_max (float):
             the greatest lower bound of the uniform distribution of almost-width-almost-maximum intensities (how many pixels to the side is the supergaussian 255/256 times maximum intensity) for each fiducial randomized
+            must not be smaller than fidSuperGaussAWAM_min
         fidSuperGaussHWHM_dmin (float):
             the least upper bound of the uniform distribution of dhalf-width-half-maximum intensities (how many pixels to the side of the AWAM is the supergaussian half the maximum intensity) for each fiducial randomized
+            must not be larger than fidSuperGaussHWHM_max
         fidSuperGaussHWHM_dmax (float):
             the greatest lower bound of the uniform distribution of dhalf-width-half-maximum intensities (how many pixels to the side of the AWAM is the supergaussian half the maximum intensity) for each fiducial randomized
+            must not be smaller than fidSuperGaussHWHM_dmin
         maxn (int):
             all basis functions (orthogonal gradient/curl zernikes) with degree maxn or lower (except the trivial piston) are included in warping with random magnitudes
     """
@@ -66,7 +76,7 @@ def genimg(width=8192, height=5120, fpslayoutfilename='fps_RTConfig.txt', outfil
     print('Loading fiducials from %s'%fpslayoutfilename)
     maxR = 0
     fidxys = ioutils.fiducial_xys_from_file(fpslayoutfilename)
-    fidxys = opticsmath.unitize_xys(fidxys, None)
+    fidxys = opticsmath.unitize_xys(fidxys, radius)
     fidGaussPeaks = numpy.random.uniform(fidSuperGaussPeak_min,fidSuperGaussPeak_max, int(len(fidxys)/2))
     fidGaussAWAMs = numpy.random.uniform(fidSuperGaussAWAM_min,fidSuperGaussAWAM_max, int(len(fidxys)/2))
     fidGaussHWHMs = fidGaussAWAMs+numpy.random.uniform(fidSuperGaussHWHM_dmin,fidSuperGaussHWHM_dmax, int(len(fidxys)/2))
