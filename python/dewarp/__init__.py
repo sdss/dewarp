@@ -23,40 +23,47 @@ log = get_logger(NAME)
 
 __version__ = '0.0.0'
 
-def dewarp(fpslayoutfilename='fps_RTConfig', fiducialsimgfile, fibersimgfile):
+def dewarp(fiducialsimgfile, fibersimgfile, fpslayoutfilename='fps_RTConfig'):
     """Computes the optical warp based on an image of fiducials and applys it to an image of fibers
     
     Parameters:
-        fpslayoutfilename (str):
-            path to a config file containing fiducial positions (probably has '.txt' extension)
         fiducialsimgfile (str):
             path to a fits image file containing illuminated fiducials (must have '.fits' extension)
         fibersimgfile
             path to a fits image file containing illuminated metrology fibers (must have '.fits' extension)
+        fpslayoutfilename (str):
+            path to a config file containing fiducial positions (probably has '.txt' extension)
 
     Returns:
         xys (list):
             a list of interleaved xy coordinates of the dots found in the image, unwarped based on coefs
     """
-    coefs = detectwarp(fpslayoutfilename, fiducialsimgfile)
+    coefs = detectwarp(fpslayoutfilename, radius, fiducialsimgfile)
     return applywarp(coefs, fibersimgfile)
 
-def detectwarp(fpslayoutfilename='fps_RTConfig.txt', infilename='simulatedwarpedfiducials.fits'):
+def detectwarp(fpslayoutfilename='fps_RTConfig.txt', fiducialradius=350, infilename='simulatedwarpedfiducials.fits', imageradius=2500):
     """Computes the optical warp of an image based on fiducials
     
     Parameters:
         fpslayoutfilename (str):
             path to a config file containing fiducial positions (probably has '.txt' extension)
+        fiducialradius (float):
+            the radius (nonnegative) that all the dots are within, in whatever units the file would like (probably mm)
         infilename (str):
             path to a fits image file (must have '.fits' extension)
+        imageradius (float):
+            the radius (nonnegative) that all the dots in the image are within, in pixels
 
     Returns:
         coefs (warpcoefs):
             an object containing coefficents and functions to dewarp points, probably to be used in applywarp()
     """
     ideal_xys = ioutils.fiducial_xys_from_file(fpslayoutfilename)
+    ideal_xys = opticsmath.unitize_xys(ideal_xys, fiducialradius)
     imgdata = imgutils.readimage(infilename)
     observed_xys = imgutils.centroids_hexpeelbijected(imgdata, ideal_xys)
+    observed_xys = opticsmath.unitize_xys(observed_xys, imageradius)
+    return warpcoefs(observed_xys, ideal_xys, .01)
 
 def applywarp(coefs, infilename='simulatedwarpedfiducials.fits'):
     """Applys optical warp to an image
@@ -72,7 +79,7 @@ def applywarp(coefs, infilename='simulatedwarpedfiducials.fits'):
             a list of interleaved xy coordinates of the dots found in the image, unwarped based on coefs
     """
     imgdata = imgutils.readimage(infilename)
-    xys =imgutils.centroids(imgdata)
+    xys = imgutils.centroids(imgdata)
     return coefs.applytransform(xys)
 
 def fakewarp(fpslayoutfilename='fps_RTConfig.txt', radius=350, whichinstrument='fiducial', outfilename='simulatedwarpedfiducials.fits'):

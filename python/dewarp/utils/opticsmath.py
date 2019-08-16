@@ -397,6 +397,55 @@ def transform_hex2cart_ra2xy(r, a):
     sgn = 1-2*floor(2*a)
     return (x*r*sgn,y*r*sqrt(3)*sgn)
 
+def untrueconvexhull(xys, howtrue=.1):
+    """Computes the convex hull of a set of points
+
+    Parameters:
+        xys (list):
+            interleaved xy coordinates
+
+    Returns:
+        indicies (list):
+            a list containing the indicies of the x-coordinates of the points which are members of the convex hull of the set (nonempty if xys is nonempty)
+    """
+    if len(xys)<1:
+        return []
+    idxs = []
+    rightupmostx = None
+    rightupmosty = None
+    rightupmostidx = None
+    for i in range(0,len(xys),2):
+        if rightupmostidx is None or xys[i]>rightupmostx or (xys[i]==rightupmostx and xys[i+1]>=rightupmosty):
+            rightupmostidx = i
+            rightupmostx = xys[i]
+            rightupmosty = xys[i+1]
+    lastlastx = rightupmostx
+    lastlasty = rightupmosty-1
+    lastx = rightupmostx
+    lasty = rightupmosty
+    idx = rightupmostidx
+    while idx not in idxs:
+        idxs.append(idx)
+        bestslopex = None
+        bestslopey = None
+        bestslopeuncos = None
+        bestslopeidx = None
+        for i in range(0,len(xys),2):
+            if xys[i]==lastx and xys[i+1]==lasty:
+                continue
+            slopeuncos = ((lastx-xys[i])*(lastx-lastlastx)+(lasty-xys[i+1])*(lasty-lastlasty)-howtrue)/math.sqrt((lastx-xys[i])**2+(lasty-xys[i+1])**2)
+            if bestslopeidx is None or slopeuncos<bestslopeuncos:
+                bestslopeuncos = slopeuncos
+                bestslopeidx = i
+                bestslopex = xys[i]
+                bestslopey = xys[i+1]
+        idx = bestslopeidx
+        lastlastx = lastx
+        lastlasty = lasty
+        lastx = xys[idx]
+        lasty = xys[idx+1]
+    return idxs
+
 def unittest_plotzernikes(degree=10):
     """Plots all zernikes with n index from 0 to degree and all m indicies"""
     coefs = warpcoefs()

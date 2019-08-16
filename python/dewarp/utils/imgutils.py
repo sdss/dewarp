@@ -53,7 +53,7 @@ def readimage(filename):
         data = hdul[0].data
     return data
 
-def centroids_hexpeelbijected(data, expectedxys):
+def centroids_hullbijected(data, expectedxys):
     """Finds centroids in an image and matches them to the expectedxys
     
     if the amount of centroids founds is not the same as the amount of points in expectedxys, None is returned
@@ -70,18 +70,25 @@ def centroids_hexpeelbijected(data, expectedxys):
             a list of interleaved xy positions, the same length as expectedxys
             these are the positions of the centroids in the image, ordered 'just like' the expectedxys
     """
-    centroidxys = centroids(filename)
+    copy_centroidxys = centroids(filename)
+    copy_expectedxys = [a for a in expectedxys]
+    centroidxys = []
     if len(centroids) is not len(expectedxys):
         return None
     expectedhexs = []
     centroidhexs = []
-    for i in range(0,len(expectedxys),2):
-        r,a = opticsmath.transform_cart2hex_xy2ra(expectedxys[i],expectedxys[i+1])
+    for i in range(0,len(copy_expectedxys),2):
+        r,a = opticsmath.transform_cart2hex_xy2ra(copy_expectedxys[i],copy_expectedxys[i+1])
         centroidhexs.append(r)
         centroidhexs.append(a)
-        r,a = opticsmath.transform_cart2hex_xy2ra(centroidxys[i],centroidxys[i+1])
+        r,a = opticsmath.transform_cart2hex_xy2ra(copy_centroidxys[i],copy_centroidxys[i+1])
         expectedhexs.append(r)
         expectedhexs.append(a)
+    while len(expectedhullidxs)>0 or len(centroidhullidxs)>0:
+        expectedhullidxs = opticsmath.untrueconvexhull(copy_expectedxys)
+        centroidhullidxs = opticsmath.untrueconvexhull(copy_centroidxys)
+    #need to finish
+
     return centroidxys
 
 def centroids(data):

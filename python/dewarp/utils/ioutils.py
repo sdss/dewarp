@@ -41,3 +41,12 @@ def specific_instrument_entries_from_file(filename_with_extension, which_instrum
 
 def fiducial_xys_from_file(filename_with_extension):
     return specific_instrument_entries_from_file(filename_with_extension, lambda a: a.lower()=='fiducial', [2,3])
+
+def boss_xys_from_file(filename_with_extension):
+    return specific_instrument_entries_from_file(filename_with_extension, lambda a: a.lower()=='boss', [2,3])
+
+def ba_xys_from_file(filename_with_extension):
+    return specific_instrument_entries_from_file(filename_with_extension, lambda a: a.lower()=='ba', [2,3])
+
+def apogee_xys_from_file(filename_with_extension):
+    return specific_instrument_entries_from_file(filename_with_extension, lambda a: a.lower()=='apogee', [2,3])
