@@ -10,6 +10,9 @@ from .utils import get_logger
 
 from .utils import opticsmath
 from .utils import ioutils
+from .utils import imgutils
+import time
+import numpy
 
 NAME = 'dewarp'
 
@@ -63,9 +66,6 @@ def genimg(width=8192, height=5210, radius=None, fpslayoutfilename='fps_RTConfig
         maxn (int):
             all basis functions (orthogonal gradient/curl zernikes) with degree maxn or lower (except the trivial piston) are included in warping with random magnitudes
     """
-    from astropy.io import fits
-    import time
-    import numpy
     elapsedTime = time.time()
 
     #parameters and variables
@@ -129,8 +129,7 @@ def genimg(width=8192, height=5210, radius=None, fpslayoutfilename='fps_RTConfig
 
 
     print('Writing data to %s'%outfilename)
-    hdu = fits.PrimaryHDU(data.T) #transposed since that's the way the axes go
-    hdu.writeto(outfilename, overwrite=True)
+    imgutils.writetoimage(outfilename, data)
 
 
 

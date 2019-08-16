@@ -321,6 +321,82 @@ def unitize_xys(xys, radius):
         radius = 1.5*math.sqrt(numpy.max(numpy.square(xys[0::2])+numpy.square(xys[1::2])))
     return numpy.divide(xys, radius)
 
+def transform_cart2hex_xy2ra(x, y):
+    """Computes the transform from cartesian to hexagonal
+
+    Paramters:
+        x,y (float):
+            a coordinate in cartesian
+
+    Returns:
+        r,a (float):
+            a tuple containing
+            the radius of the hexagon (always nonnegative) (the circumradius, not the apothem) and 
+            the 'angle' is in the range [0,1) and increases linearly when the cartesian point is moved linearly along an oriented hexagon (with top and bottom aligned parallel to x-axis)
+    """
+    r = None
+    a = None
+    root3 = math.sqrt(3)
+    root3x = root3*x
+    yonroot3 = y/root3
+    ratio = x/y
+    root3ratio = root3*ratio
+    if x==0 and y==0:
+        r = 0
+        a = 0
+    elif abs(root3x)<=abs(y):
+        r = 2*yonroot3
+        a = abs(1-root3ratio)/2
+        if y<0:
+            a += 4
+        else:
+            a += 1
+    else:
+        r = abs(x)+abs(yonroot3)
+        if x*y>0:
+            a = 2/abs(1+root3ratio)
+            if x<0:
+                a += 3
+        else:
+            a = -2/abs(1-root3ratio)
+            if x<0:
+                a += 3
+            else:
+                a += 6
+    return (r,a/6)
+
+def transform_hex2cart_ra2xy(r, a):
+    """Computes the transform from hexagonal to cartesian
+
+    Paramters:
+        r,a (float):
+            a coordinate in hexagonal, r is made to be (should be) nonnegative and a is made to be (should be) in the range [0,1)
+
+    Returns:
+        x,y (float):
+            a tuple containing the xy cartesian point on an oriented hexagon (top and bottom parallel to x-axis)
+            with radius (circumradius not apothem) r, 
+            a unitary distance a along the perimeter starting from the right going counterclockwise
+    """
+    a = a%1
+    r = abs(r)
+    if r==0:
+        return (0,0)
+    amodhalf = a%.5
+    sixth = 1/6
+    third = 1/3
+    if sixth<=amodhalf and amodhalf<=third:
+        x = 3*(1-4*amodhalf)/2
+        y = 1/2
+    elif modhalf<=sixth:
+        x = 1-3*amodhalf
+        y = 3*amodhalf
+    else:
+        x = 1/3/sqrt(3)-3*amodhalf
+        y = 3*(1/2-amodhalf)
+    sgn = 1-2*floor(2*a)
+    return (x*r*sgn,y*r*sqrt(3)*sgn)
+
 def unittest_plotzernikes(degree=10):
     """Plots all zernikes with n index from 0 to degree and all m indicies"""
     coefs = warpcoefs()
