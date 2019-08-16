@@ -14,7 +14,7 @@ from __future__ import unicode_literals
 
 from astropy.io import fits
 import numpy
-from .utils import opticsmath
+from dewarp.utils import opticsmath
 
 def writetoimage(filename, data, clobber=True, data_is_rowmajorx=True):
     """Writes data to an image
