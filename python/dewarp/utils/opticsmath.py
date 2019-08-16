@@ -400,6 +400,8 @@ def transform_hex2cart_ra2xy(r, a):
 def untrueconvexhull(xys, howtrue=.1):
     """Computes the convex hull of a set of points
 
+    ignores any points for which the x value is None
+
     Parameters:
         xys (list):
             interleaved xy coordinates
@@ -415,7 +417,7 @@ def untrueconvexhull(xys, howtrue=.1):
     rightupmosty = None
     rightupmostidx = None
     for i in range(0,len(xys),2):
-        if rightupmostidx is None or xys[i]>rightupmostx or (xys[i]==rightupmostx and xys[i+1]>=rightupmosty):
+        if xys[i] is not None and (rightupmostidx is None or xys[i]>rightupmostx or (xys[i]==rightupmostx and xys[i+1]>=rightupmosty)):
             rightupmostidx = i
             rightupmostx = xys[i]
             rightupmosty = xys[i+1]
@@ -431,7 +433,7 @@ def untrueconvexhull(xys, howtrue=.1):
         bestslopeuncos = None
         bestslopeidx = None
         for i in range(0,len(xys),2):
-            if xys[i]==lastx and xys[i+1]==lasty:
+            if xys[i] is None or (xys[i]==lastx and xys[i+1]==lasty):
                 continue
             slopeuncos = ((lastx-xys[i])*(lastx-lastlastx)+(lasty-xys[i+1])*(lasty-lastlasty)-howtrue)/math.sqrt((lastx-xys[i])**2+(lasty-xys[i+1])**2)
             if bestslopeidx is None or slopeuncos<bestslopeuncos:

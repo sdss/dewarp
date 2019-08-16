@@ -71,24 +71,24 @@ def centroids_hullbijected(data, expectedxys):
             these are the positions of the centroids in the image, ordered 'just like' the expectedxys
     """
     copy_centroidxys = centroids(filename)
-    copy_expectedxys = [a for a in expectedxys]
-    centroidxys = []
-    if len(centroids) is not len(expectedxys):
+    if len(copy_centroidxys) is not len(expectedxys):
         return None
-    expectedhexs = []
-    centroidhexs = []
-    for i in range(0,len(copy_expectedxys),2):
-        r,a = opticsmath.transform_cart2hex_xy2ra(copy_expectedxys[i],copy_expectedxys[i+1])
-        centroidhexs.append(r)
-        centroidhexs.append(a)
-        r,a = opticsmath.transform_cart2hex_xy2ra(copy_centroidxys[i],copy_centroidxys[i+1])
-        expectedhexs.append(r)
-        expectedhexs.append(a)
-    while len(expectedhullidxs)>0 or len(centroidhullidxs)>0:
+    copy_expectedxys = [a for a in expectedxys]
+    centroidxys = [None]*len(copy_centroidxys)
+    count = 0
+    while count<len(copy_centroidxys):
         expectedhullidxs = opticsmath.untrueconvexhull(copy_expectedxys)
         centroidhullidxs = opticsmath.untrueconvexhull(copy_centroidxys)
-    #need to finish
-
+        if len(expectedhullidxs)!=len(centroidhullidxs):
+            return None
+        for i in range(len(expectedhullidxs)):
+            centroidxys[expectedhullidxs[i]] = copy_centroidxys[centroidhullidxs[i]]
+            centroidxys[expectedhullidxs[i]+1] = copy_centroidxys[centroidhullidxs[i]+1]
+            copy_centroidxys[centroidhullidxs[i]] = None
+            copy_centroidxys[centroidhullidxs[i]+1] = None
+            copy_expectedxys[expectedhullidxs[i]] = None
+            copy_expectedxys[expectedhullidxs[i]+1] = None
+            count += 1
     return centroidxys
 
 def centroids(data):
