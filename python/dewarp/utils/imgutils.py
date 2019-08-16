@@ -55,7 +55,7 @@ def centroids_hexpeelbijected(filename, expectedhexs):
             these are the positions of the centroids in the image, ordered just like the expectedhexs
     """
     centroids = centroids(filename)
-    if len(centroids) is not len(expectedhexs)
+    if len(centroids) is not len(expectedhexs):
         return None
     centroidhexs = []
     for i in range(0,len(expectedhexs),2):
