@@ -41,6 +41,3 @@ def specific_instrument_entries_from_file(filename_with_extension, which_instrum
 
 def fiducial_xys_from_file(filename_with_extension):
     return specific_instrument_entries_from_file(filename_with_extension, lambda a: a.lower()=='fiducial', [2,3])
-
-def fiducial_hexs_from_file(filename_with_extension):
-    return specific_instrument_entries_from_file(filename_with_extension, lambda a: a.lower()=='fiducial', [0,1])
