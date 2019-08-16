@@ -33,7 +33,7 @@ def writetoimage(filename, data, clobber=True, data_is_rowmajorx=True):
     """
     if data_is_rowmajorx:
         hdu = fits.PrimaryHDU(data.T) #transposed since that's the way the axes go
-    else
+    else:
         hdu = fits.PrimaryHDU(data)
     hdu.writeto(outfilename, overwrite=clobber)
 
