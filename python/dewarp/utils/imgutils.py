@@ -13,8 +13,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from astropy.io import fits
-import opticsmath
 import numpy
+from .utils import opticsmath
 
 def writetoimage(filename, data, clobber=True, data_is_rowmajorx=True):
     """Writes data to an image
