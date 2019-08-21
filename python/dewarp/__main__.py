@@ -12,6 +12,6 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from .core import dodewarp as Icommandthee
+from core.dewarp import *
 
-Icommandthee.detectwarp()
+detectwarp()

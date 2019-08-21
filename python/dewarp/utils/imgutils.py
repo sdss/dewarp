@@ -70,7 +70,7 @@ def centroids_hullbijected(data, expectedxys):
             a list of interleaved xy positions, the same length as expectedxys
             these are the positions of the centroids in the image, ordered 'just like' the expectedxys
     """
-    copy_centroidxys = centroids(filename)
+    copy_centroidxys = centroids(data)
     if len(copy_centroidxys) is not len(expectedxys):
         return None
     copy_expectedxys = [a for a in expectedxys]
@@ -103,7 +103,7 @@ def centroids(data):
             a list of interleaved xy positions
             these are the positions of the centroids in the image
     """
-    pass
+    return None
 
 def genimg(unitary_xys, width=8192, height=5210, outfilename='simulatedwarpedfiducials.fits', bgIntensity=3, bgGaussMean=2, bgGaussStdDev=1, superGaussPeak_min=190, superGaussPeak_max=210, superGaussAWAM_min=1, superGaussAWAM_max=2, superGaussHWHM_dmin=1, superGaussHWHM_dmax=4, maxn=5):
     """Draws a warped theoretical image of dots
