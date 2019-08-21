@@ -1,12 +1,16 @@
 # encoding: utf-8
 #
-# setup.py
+# @Author:    Adam Mendenhall (modified to install nonpip dependencies)
+# @Date:      August 8, 2019
+# @Filename:  setup.py
+# @License:   BSD 3-Clause
+# @Copyright: Adam Mendenhall
 #
-
 
 from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 
 from setuptools import setup, find_packages
 
@@ -22,7 +26,7 @@ VERSION = '0.0.0'
 RELEASE = 'dev' in VERSION
 
 
-def run(packages, install_requires):
+def run(packages, install_requires_pip, install_requires_nopip):
 
     setup(name=NAME,
           version=VERSION,
@@ -35,7 +39,8 @@ def run(packages, install_requires):
           url='https://github.com/sdss/dewarp',
           include_package_data=True,
           packages=packages,
-          install_requires=install_requires,
+          install_requires=install_requires_pip,
+          dependency_links=install_requires_nopip,
           package_dir={'': 'python'},
           scripts=['bin/dewarp'],
           classifiers=[
@@ -63,9 +68,14 @@ def get_requirements(opts):
         name = 'requirements.txt'
 
     requirements_file = os.path.join(os.path.dirname(__file__), name)
-    install_requires = [line.strip().replace('==', '>=') for line in open(requirements_file)
+    install_requires_pip = [line.strip().replace('==', '>=') for line in open(requirements_file)
                         if not line.strip().startswith('#') and line.strip() != '']
-    return install_requires
+
+    name = 'notonpip.txt'
+    requirements_file = os.path.join(os.path.dirname(__file__), name)
+    install_requires_nopip = [line.strip().replace('==', '>=') for line in open(requirements_file)
+                        if not line.strip().startswith('#') and line.strip() != '']
+    return (install_requires_pip, install_requires_nopip)
 
 
 def remove_args(parser):
@@ -94,7 +104,7 @@ if __name__ == '__main__':
     args = parser.parse_known_args()[0]
 
     # Get the proper requirements file
-    install_requires = get_requirements(args)
+    install_requires_pip, install_requires_nopip = get_requirements(args)
 
     # Now we remove all our custom arguments to make sure they don't interfere with distutils
     remove_args(parser)
@@ -103,4 +113,4 @@ if __name__ == '__main__':
     packages = find_packages(where='python')
 
     # Runs distutils
-    run(packages, install_requires)
+    run(packages, install_requires_pip, install_requires_nopip)
