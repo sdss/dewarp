@@ -23,7 +23,7 @@ log = get_logger(NAME)
 
 __version__ = '0.0.0'
 
-def dewarp(fiducialsimgfile, fibersimgfile, fpslayoutfilename='fps_RTConfig'):
+def dewarp(fiducialsimgfile, fibersimgfile, fpslayoutfilename='etc/fps_RTConfig'):
     """Computes the optical warp based on an image of fiducials and applys it to an image of fibers
     
     Parameters:
@@ -41,7 +41,7 @@ def dewarp(fiducialsimgfile, fibersimgfile, fpslayoutfilename='fps_RTConfig'):
     coefs = detectwarp(fpslayoutfilename, radius, fiducialsimgfile)
     return applywarp(coefs, fibersimgfile)
 
-def detectwarp(fpslayoutfilename='fps_RTConfig.txt', fiducialradius=350, infilename='simulatedwarpedfiducials.fits', imageradius=2500):
+def detectwarp(fpslayoutfilename='etc/fps_RTConfig.txt', fiducialradius=350, infilename='etc/simulatedwarpedfiducials.fits', imageradius=2500):
     """Computes the optical warp of an image based on fiducials
     
     Parameters:
@@ -65,7 +65,7 @@ def detectwarp(fpslayoutfilename='fps_RTConfig.txt', fiducialradius=350, infilen
     observed_xys = opticsmath.unitize_xys(observed_xys, imageradius)
     return warpcoefs(observed_xys, ideal_xys, .01)
 
-def applywarp(coefs, infilename='simulatedwarpedfiducials.fits'):
+def applywarp(coefs, infilename='etc/simulatedwarpedfiducials.fits'):
     """Applys optical warp to an image
     
     Parameters:
@@ -82,7 +82,7 @@ def applywarp(coefs, infilename='simulatedwarpedfiducials.fits'):
     xys = imgutils.centroids(imgdata)
     return coefs.applytransform(xys)
 
-def fakewarp(fpslayoutfilename='fps_RTConfig.txt', radius=350, whichinstrument='fiducial', outfilename='simulatedwarpedfiducials.fits'):
+def fakewarp(fpslayoutfilename='etc/fps_RTConfig.txt', radius=350, whichinstrument='fiducial', outfilename='etc/simulatedwarpedfiducials.fits'):
     """Generates a warped image based on a configuration file
     
     Parameters:
