@@ -14,6 +14,7 @@ from __future__ import unicode_literals
 
 from .utils import get_config
 from .utils import get_logger
+from .core.dewarp import *
 
 NAME = 'dewarp'
 

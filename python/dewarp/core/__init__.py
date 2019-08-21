@@ -6,5 +6,3 @@
 # @License:   BSD 3-Clause
 # @Copyright: Adam Mendenhall
 #
-
-from .core.dodewarp import *
