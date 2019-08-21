@@ -1,2 +1,2 @@
 
-git://github.com/ApachePointObservatory/PyGuide@python6#egg=PyGuide
+git+https://github.com/ApachePointObservatory/PyGuide@python6#egg=PyGuide

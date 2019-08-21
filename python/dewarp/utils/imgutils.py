@@ -15,6 +15,7 @@ from __future__ import unicode_literals
 from astropy.io import fits
 import numpy
 from dewarp.utils import opticsmath
+import PyGuide
 
 def writetoimage(filename, data, clobber=True, data_is_rowmajorx=True):
     """Writes data to an image
@@ -103,7 +104,12 @@ def centroids(data):
             a list of interleaved xy positions
             these are the positions of the centroids in the image
     """
-    return None
+    centroids, stats = findStars(data, None, None, PyGuide.CCDInfo(2176, 19, 2.1), thresh=DefThresh, radMult=1.0, rad=None, verbosity=0, doDS9=False)
+    out = []
+    for centroid in centroids:
+        out.append(centroid.xyCtr[0])
+        out.append(centroid.xyCtr[1])
+    return out
 
 def genimg(unitary_xys, width=8192, height=5210, outfilename='simulatedwarpedfiducials.fits', bgIntensity=3, bgGaussMean=2, bgGaussStdDev=1, superGaussPeak_min=190, superGaussPeak_max=210, superGaussAWAM_min=1, superGaussAWAM_max=2, superGaussHWHM_dmin=1, superGaussHWHM_dmax=4, maxn=5):
     """Draws a warped theoretical image of dots
