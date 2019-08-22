@@ -99,8 +99,8 @@ def fakewarp(fpslayoutfilename=None, radius=350, whichinstrument='fiducial', out
     """
     if fpslayoutfilename is None:
         fpslayoutfilename = pkg_resources.resource_filename('dewarp', 'etc/fps_RTConfig.txt')
-    if infilename is None:
-        infilename = pkg_resources.resource_filename('dewarp', 'etc/simulatedwarpedfiducials.fits')
+    if outfilename is None:
+        outfilename = 'img.fits'
     xys = ioutils.specific_instrument_entries_from_file(fpslayoutfilename, lambda a: a.lower==whichinstrument.lower(), [2,3])
     xys = opticsmath.unitize_xys(xys, radius)
     imgutils.genimg(xys, outfilename=outfilename)
