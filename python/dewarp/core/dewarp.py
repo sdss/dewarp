@@ -102,6 +102,6 @@ def fakewarp(fpslayoutfilename=None, radius=350, whichinstrument='fiducial', out
     if outfilename is None:
         outfilename = 'img.fits'
     print(fpslayoutfilename)
-    xys = ioutils.specific_instrument_entries_from_file(fpslayoutfilename, lambda a: a.lower==whichinstrument.lower(), [2,3])
+    xys = ioutils.fiducial_xys_from_file
     xys = opticsmath.unitize_xys(xys, radius)
     imgutils.genimg(xys, outfilename=outfilename)
