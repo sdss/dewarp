@@ -17,7 +17,7 @@ import numpy
 from dewarp.utils import opticsmath
 import PyGuide
 
-def writetoimage(filename, data, clobber=True, data_is_rowmajorx=True):
+def writetoimage(outfilename, data, clobber=True, data_is_rowmajorx=True):
     """Writes data to an image
     
     Parameters:
