@@ -104,7 +104,7 @@ def centroids(data):
             a list of interleaved xy positions
             these are the positions of the centroids in the image
     """
-    centroids, stats = findStars(data, None, None, PyGuide.CCDInfo(2176, 19, 2.1), thresh=DefThresh, radMult=1.0, rad=None, verbosity=0, doDS9=False)
+    centroids, stats = PyGuide.findStars(data, None, None, PyGuide.CCDInfo(2176, 19, 2.1), thresh=DefThresh, radMult=1.0, rad=None, verbosity=0, doDS9=False)
     out = []
     for centroid in centroids:
         out.append(centroid.xyCtr[0])
