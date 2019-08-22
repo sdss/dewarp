@@ -218,7 +218,7 @@ def genimg(unitary_xys, width=8192, height=5210, outfilename='simulatedwarpedfid
 
 
     print('Writing data to %s'%outfilename)
-    imgutils.writetoimage(outfilename, data)
+    writetoimage(outfilename, data)
 
 
 
