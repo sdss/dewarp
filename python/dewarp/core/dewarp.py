@@ -59,9 +59,11 @@ def detectwarp(fpslayoutfilename=None, fiducialradius=350, infilename=None, imag
     if infilename is None:
         infilename = pkg_resources.resource_filename('dewarp', 'etc/simulatedwarpedfiducials.fits')
     ideal_xys = ioutils.fiducial_xys_from_file(fpslayoutfilename)
+    print('we have ',len(ideal_xys),' ideal xys')
     ideal_xys = opticsmath.unitize_xys(ideal_xys, fiducialradius)
     imgdata = imgutils.readimage(infilename)
     observed_xys = imgutils.centroids_hullbijected(imgdata, ideal_xys)
+    print('we have ',len(observed_xys),' ideal xys')
     observed_xys = opticsmath.unitize_xys(observed_xys, imageradius)
     return warpcoefs(observed_xys, ideal_xys, .01)
 
