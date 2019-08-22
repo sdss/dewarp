@@ -1,6 +1,8 @@
 
 numpy
 astropy
+#this repo does not rely on scipy, but PyGuide does (and it does not auto install its dependencies)
+scipy
 pyyaml
 pygments
 sdss-tree>=2.15.2
