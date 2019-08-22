@@ -27,6 +27,7 @@ def specific_instrument_entries_from_file(filename_with_extension, which_instrum
     for line in f:
         if len(line)>0 and line[0]!='#':
             attributes = line.split()
+            print(attributes)
             if len(attributes)>4:
                 if which_instruments(attributes[4]):
                     try:
