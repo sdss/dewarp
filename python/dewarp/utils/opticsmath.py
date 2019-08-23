@@ -397,7 +397,7 @@ def transform_hex2cart_ra2xy(r, a):
     sgn = 1-2*floor(2*a)
     return (x*r*sgn,y*r*sqrt(3)*sgn)
 
-def untrueconvexhull(xys, howtrue=.1):
+def convexhull(xys):
     """Computes the convex hull of a set of points
 
     ignores any points for which the x value is None
@@ -405,6 +405,59 @@ def untrueconvexhull(xys, howtrue=.1):
     Parameters:
         xys (list):
             interleaved xy coordinates
+
+    Returns:
+        indicies (list):
+            a list containing the indicies of the x-coordinates of the points which are members of the convex hull of the set (nonempty if xys is nonempty)
+    """
+    if len(xys)<1:
+        return []
+    idxs = []
+    rightupmostx = None
+    rightupmosty = None
+    rightupmostidx = None
+    for i in range(0,len(xys),2):
+        if xys[i] is not None and (rightupmostidx is None or xys[i]>rightupmostx or (xys[i]==rightupmostx and xys[i+1]>=rightupmosty)):
+            rightupmostidx = i
+            rightupmostx = xys[i]
+            rightupmosty = xys[i+1]
+    lastlastx = rightupmostx
+    lastlasty = rightupmosty-1
+    lastx = rightupmostx
+    lasty = rightupmosty
+    idx = rightupmostidx
+    while idx not in idxs:
+        idxs.append(idx)
+        bestslopex = None
+        bestslopey = None
+        bestslopeuncos = None
+        bestslopeidx = None
+        for i in range(0,len(xys),2):
+            if xys[i] is None or (xys[i]==lastx and xys[i+1]==lasty):
+                continue
+            slopeuncos = ((lastx-xys[i])*(lastx-lastlastx)+(lasty-xys[i+1])*(lasty-lastlasty))/math.sqrt((lastx-xys[i])**2+(lasty-xys[i+1])**2)
+            if bestslopeidx is None or slopeuncos<bestslopeuncos:
+                bestslopeuncos = slopeuncos
+                bestslopeidx = i
+                bestslopex = xys[i]
+                bestslopey = xys[i+1]
+        idx = bestslopeidx
+        lastlastx = lastx
+        lastlasty = lasty
+        lastx = xys[idx]
+        lasty = xys[idx+1]
+    return idxs
+
+def untrueconvexhull(xys, howtrue=.1):
+    """Computes the convex hull of a set of points, deviating slightly when points are very close to the edge (the farther from 0 howtrue, the more lenient)
+
+    ignores any points for which the x value is None
+
+    Parameters:
+        xys (list):
+            interleaved xy coordinates
+        howtrue (float):
+            the closer this is to 0, the more strictly convex the set is (set to 0 to be truly convex)
 
     Returns:
         indicies (list):
@@ -446,6 +499,111 @@ def untrueconvexhull(xys, howtrue=.1):
         lastlasty = lasty
         lastx = xys[idx]
         lasty = xys[idx+1]
+    return idxs
+
+def leastunconvexhull(xys, howmany):
+    """Computes a pretty darn convex hull of a set of points, always returning howmany indicies
+
+    ignores any points for which the x value is None
+
+    Parameters:
+        xys (list):
+            interleaved xy coordinates
+        howmany:
+            how many indicies to return
+            if the convex hull has more than this, some points in the hull are removed
+            if the convex hull has less than this, some points which keep the hull mostly convex are added (convexity is sacrificied)
+            if there are not howmany points in xys, it is not possible to return howmany indicies
+
+    Returns:
+        indicies (list):
+            a list containing the indicies of the x-coordinates of the points which are members of the convex hull of the set (nonempty if xys is nonempty)
+    """
+    if len(xys)<1:
+        return []
+    idxs = []
+    rightupmostx = None
+    rightupmosty = None
+    rightupmostidx = None
+    for i in range(0,len(xys),2):
+        if xys[i] is not None and (rightupmostidx is None or xys[i]>rightupmostx or (xys[i]==rightupmostx and xys[i+1]>=rightupmosty)):
+            rightupmostidx = i
+            rightupmostx = xys[i]
+            rightupmosty = xys[i+1]
+    lastlastx = rightupmostx
+    lastlasty = rightupmosty-1
+    lastx = rightupmostx
+    lasty = rightupmosty
+    idx = rightupmostidx
+    while idx not in idxs:
+        idxs.append(idx)
+        bestslopex = None
+        bestslopey = None
+        bestslopeuncos = None
+        bestslopeidx = None
+        for i in range(0,len(xys),2):
+            if xys[i] is None or (xys[i]==lastx and xys[i+1]==lasty):
+                continue
+            slopeuncos = ((lastx-xys[i])*(lastx-lastlastx)+(lasty-xys[i+1])*(lasty-lastlasty))/math.sqrt((lastx-xys[i])**2+(lasty-xys[i+1])**2)
+            if bestslopeidx is None or slopeuncos<bestslopeuncos:
+                bestslopeuncos = slopeuncos
+                bestslopeidx = i
+                bestslopex = xys[i]
+                bestslopey = xys[i+1]
+        idx = bestslopeidx
+        lastlastx = lastx
+        lastlasty = lasty
+        lastx = xys[idx]
+        lasty = xys[idx+1]
+    if len(idxs)>howmany:
+        while len(idxs)>howmany:
+            minconvexityidx = None
+            minconvexity = None
+            for i in range(len(idxs)):
+                ia = (i+2)%len(idxs)
+                xa = xys[idxs[ia]]
+                ya = xys[idxs[ia]+1]
+                ib = (i+len(idxs)-2)%len(idxs)
+                xb = xys[idxs[ib]]
+                yb = xys[idxs[ib]+1]
+                x = xys[idxs[i]]
+                y = xys[idxs[i]+1]
+                da = math.sqrt((xa-xb)**2+(ya-yb)**2)
+                db = math.sqrt((xa-x)**2+(ya-y)**2)
+                dc = math.sqrt((xb-x)**2+(yb-y)**2)
+                s = (da+db+dc)/2
+                convexity = s*(s-da)*(s-db)*(s-dc)
+                if minconvexityidx is None or convexity<minconvexity:
+                    minconvexityidx = idxs[i]
+                    minconvexity = convexity
+            idxs.remove(minconvexityidx)
+    elif len(idxs)<howmany:
+        while len(idxs)>howmany:
+            minconvexityidx = None
+            minconvexitysandwichidx = None
+            minconvexity = None
+            for i in range(len(xys)):
+                if i in idxs:
+                    continue
+                else:
+                    x = xys[i]
+                    y = xys[i+1]
+                    for j in range(len(idxs))
+                        xa = xys[idxs[j]]
+                        ya = xys[idxs[j]+1]
+                        jb = (j+2)%len(idxs)
+                        xb = xys[idxs[jb]]
+                        yb = xys[idxs[jb]+1]
+                        da = math.sqrt((xa-xb)**2+(ya-yb)**2)
+                        db = math.sqrt((xa-x)**2+(ya-y)**2)
+                        dc = math.sqrt((xb-x)**2+(yb-y)**2)
+                        s = (da+db+dc)/2
+                        convexity = s*(s-da)*(s-db)*(s-dc)
+                        if minconvexityidx is None or convexity<minconvexity:
+                            minconvexityidx = i
+                            minconvexitysandwichidx = j
+                            minconvexity = convexity
+            idxs.insert(minconvexitysandwichidx+1, minconvexityidx)
     return idxs
 
 def unittest_plotzernikes(degree=10):
@@ -490,4 +648,3 @@ def unittest_plotphifields(degree=10):
             zx = length*zx/r
             zy = length*zy/r
             plt.quiver(x,y,zx,zy,scale=1)
-            plt.show()

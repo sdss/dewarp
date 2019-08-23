@@ -79,9 +79,7 @@ def centroids_hullbijected(data, expectedxys):
     count = 0
     while count<len(copy_centroidxys):
         expectedhullidxs = opticsmath.untrueconvexhull(copy_expectedxys)
-        centroidhullidxs = opticsmath.untrueconvexhull(copy_centroidxys)
-        if len(expectedhullidxs)!=len(centroidhullidxs):
-            return None
+        centroidhullidxs = opticsmath.leastunconvexhull(copy_centroidxys, len(expectedhullidxs))
         for i in range(len(expectedhullidxs)):
             centroidxys[expectedhullidxs[i]] = copy_centroidxys[centroidhullidxs[i]]
             centroidxys[expectedhullidxs[i]+1] = copy_centroidxys[centroidhullidxs[i]+1]
