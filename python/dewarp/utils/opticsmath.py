@@ -588,7 +588,7 @@ def leastunconvexhull(xys, howmany):
                 else:
                     x = xys[i]
                     y = xys[i+1]
-                    for j in range(len(idxs))
+                    for j in range(len(idxs)):
                         xa = xys[idxs[j]]
                         ya = xys[idxs[j]+1]
                         jb = (j+2)%len(idxs)
