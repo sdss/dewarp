@@ -14,6 +14,7 @@ from __future__ import unicode_literals
 
 from astropy.io import fits
 import numpy
+import math
 from dewarp.utils import opticsmath
 import PyGuide
 
@@ -54,45 +55,8 @@ def readimage(filename):
         data = hdul[0].data
     return data
 
-def centroids_hullbijected(data, expectedxys):
-    """Finds centroids in an image and matches them to the expectedxys
-    
-    if the amount of centroids founds is not the same as the amount of points in expectedxys, None is returned
-
-    Parameters:
-        data (ndarray):
-            a 2d numpy array containing image data, assumed to be x row major
-        expectedxys (list):
-            a list of interleaved xy coordinates
-            these are the centroids that are expected in the image
-
-    Returns:
-        xys (list):
-            a list of interleaved xy positions, the same length as expectedxys
-            these are the positions of the centroids in the image, ordered 'just like' the expectedxys
-    """
-    copy_centroidxys = centroids(data)
-    if len(copy_centroidxys) is not len(expectedxys):
-        return None
-    copy_expectedxys = [a for a in expectedxys]
-    centroidxys = [None]*len(copy_centroidxys)
-    count = 0
-    while count<len(copy_centroidxys):
-        expectedhullidxs = opticsmath.untrueconvexhull(copy_expectedxys)
-        centroidhullidxs = opticsmath.leastunconvexhull(copy_centroidxys, len(expectedhullidxs))
-        for i in range(len(expectedhullidxs)):
-            centroidxys[expectedhullidxs[i]] = copy_centroidxys[centroidhullidxs[i]]
-            centroidxys[expectedhullidxs[i]+1] = copy_centroidxys[centroidhullidxs[i]+1]
-            copy_centroidxys[centroidhullidxs[i]] = None
-            copy_centroidxys[centroidhullidxs[i]+1] = None
-            copy_expectedxys[expectedhullidxs[i]] = None
-            copy_expectedxys[expectedhullidxs[i]+1] = None
-            count += 1
-    return centroidxys
-
 def centroids(data):
     """Finds centroids in an image
-
     Parameters:
         data (ndarray):
             a 2d numpy array containing image data, assumed to be x row major
@@ -102,14 +66,15 @@ def centroids(data):
             a list of interleaved xy positions
             these are the positions of the centroids in the image
     """
-    centroids, stats = PyGuide.findStars(data, None, None, PyGuide.CCDInfo(2176, 19, 2.1), thresh=3, radMult=1.0, rad=None, verbosity=0, doDS9=False)
+    centroids, stats = PyGuide.findStars(data, None, None, PyGuide.CCDInfo(2176, 19, 2.1), thresh=40, radMult=1.0, rad=None, verbosity=0, doDS9=False)
+    print('DONE CENTROIDING')
     out = []
     for centroid in centroids:
         out.append(centroid.xyCtr[0])
         out.append(centroid.xyCtr[1])
     return out
 
-def genimg(unitary_xys, width=8192, height=5210, outfilename='simulatedwarpedfiducials.fits', bgIntensity=3, bgGaussMean=2, bgGaussStdDev=1, superGaussPeak_min=190, superGaussPeak_max=210, superGaussAWAM_min=1, superGaussAWAM_max=2, superGaussHWHM_dmin=1, superGaussHWHM_dmax=4, maxn=5):
+def genimg(unitary_xys, width=8192, height=5210, outfilename='simulatedwarpedfiducials.fits', bgIntensity=3, bgGaussMean=2, bgGaussStdDev=1, superGaussPeak_min=190, superGaussPeak_max=210, superGaussAWAM_min=1, superGaussAWAM_max=2, superGaussHWHM_dmin=1, superGaussHWHM_dmax=4, maxn=2):
     """Draws a warped theoretical image of dots
     
     assumes the list unitary_xys contains interleaved xy coordinates of dots to draw, all within the unit square

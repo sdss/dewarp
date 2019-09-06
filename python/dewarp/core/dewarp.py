@@ -17,7 +17,7 @@ from dewarp.utils import ioutils
 from dewarp.utils import imgutils
 import pkg_resources
 
-def dewarp(fiducialsimgfile, fibersimgfile, fpslayoutfilename=None):
+def dewarp(fiducialsimgfile, fibersimgfile, fpslayoutfilename=None, trueradius=350, observeradius=2500):
     """Computes the optical warp based on an image of fiducials and applys it to an image of fibers
     
     Parameters:
@@ -34,7 +34,7 @@ def dewarp(fiducialsimgfile, fibersimgfile, fpslayoutfilename=None):
     """
     if fpslayoutfilename is None:
         fpslayoutfilename = pkg_resources.resource_filename('dewarp', 'etc/fps_RTConfig.txt')
-    coefs = detectwarp(fpslayoutfilename, radius, fiducialsimgfile)
+    coefs = detectwarp(fpslayoutfilename, trueradius, fiducialsimgfile, observeradius)
     return applywarp(coefs, fibersimgfile)
 
 def detectwarp(fpslayoutfilename=None, fiducialradius=350, infilename=None, imageradius=2500):
@@ -61,11 +61,12 @@ def detectwarp(fpslayoutfilename=None, fiducialradius=350, infilename=None, imag
     ideal_xys = ioutils.fiducial_xys_from_file(fpslayoutfilename)
     ideal_xys = opticsmath.unitize_xys(ideal_xys, fiducialradius)
     imgdata = imgutils.readimage(infilename)
-    observed_xys = imgutils.centroids_hullbijected(imgdata, ideal_xys)
+    observed_xys = imgutils.centroids(imgdata)
     observed_xys = opticsmath.unitize_xys(observed_xys, imageradius)
-    return warpcoefs(observed_xys, ideal_xys, .01)
+    observed_xys = opticsmath.sort_closest(observed_xys, ideal_xys)
+    return opticsmath.warpcoefs(observed_xys, ideal_xys, .01)
 
-def applywarp(coefs, infilename=None):
+def applywarp(coefs, infilename=None, observedradius=2500):
     """Applys optical warp to an image
     
     Parameters:
@@ -82,6 +83,7 @@ def applywarp(coefs, infilename=None):
         infilename = pkg_resources.resource_filename('dewarp', 'etc/simulatedwarpedfiducials.fits')
     imgdata = imgutils.readimage(infilename)
     xys = imgutils.centroids(imgdata)
+    xys = opticsmath.unitize_xys(xys, observedradius)
     return coefs.applytransform(xys)
 
 def fakewarp(fpslayoutfilename=None, radius=350, whichinstrument='fiducial', outfilename=None):
@@ -101,6 +103,6 @@ def fakewarp(fpslayoutfilename=None, radius=350, whichinstrument='fiducial', out
         fpslayoutfilename = pkg_resources.resource_filename('dewarp', 'etc/fps_RTConfig.txt')
     if outfilename is None:
         outfilename = 'img.fits'
-    xys = ioutils.fiducial_xys_from_file(fpslayoutfilename)
+    xys = ioutils.specific_instrument_entries_from_file(fpslayoutfilename, lambda x: x.lower()==whichinstrument, [2,3])
     xys = opticsmath.unitize_xys(xys, radius)
     imgutils.genimg(xys, outfilename=outfilename)

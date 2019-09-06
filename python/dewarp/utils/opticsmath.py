@@ -19,7 +19,7 @@ class warpcoefs:
     
     def __init__(self, fromxys=None, toxys=None, maxerr=None):
         if fromxys is not None and toxys is not None and maxerr is not None:
-            self.computeweights(fromxys, toxys, maxerr)
+            self.computetransform(fromxys, toxys, maxerr)
     
     #for key (x,y) we have bivariate polynomial for zernike, increasing row is x and increasing column is y
     zernike_xypolycoefs = {(0,0):numpy.array([[1.]]),(1,-1):numpy.array([[0.,1],[0,0]]),(1,1):numpy.array([[0.,0],[1,0]]),(2,2):numpy.array([[0.,0,-1],[0,0,0],[1,0,0]]),(2,-2):numpy.array([[0.,0,0],[0,2,0],[0,0,0]]),(2,0):numpy.array([[-1.,0,2],[0,0,0],[2,0,0]])}
@@ -321,6 +321,37 @@ def unitize_xys(xys, radius):
         radius = 1.5*math.sqrt(numpy.max(numpy.square(xys[0::2])+numpy.square(xys[1::2])))
     return numpy.divide(xys, radius)
 
+def sort_closest(tosort, matchwith):
+    """Sorts tosort so it is ordered like matchwith
+    
+    Parameters:
+        tosort (list):
+            an xy interleaved array of points
+        matchwith (list):
+            an xy interleaved array of points
+
+    Returns
+        a sorted version of tosort
+    """
+
+    copytosort = tosort.copy()
+    for j in range(0,len(matchwith),2):
+        imin = None
+        mindistsqd = None
+        for i in range(j,len(copytosort),2):
+            distsqd = (matchwith[j]-copytosort[i])**2+(matchwith[j+1]-copytosort[i+1])**2
+            if imin is None or distsqd<mindistsqd:
+                mindistsqd = distsqd
+                imin = i
+        oldx = copytosort[j]
+        oldy = copytosort[j+1]
+        copytosort[j] = copytosort[imin]
+        copytosort[j+1] = copytosort[imin+1]
+        copytosort[imin] = oldx
+        copytosort[imin+1] = oldy
+    return copytosort
+
+
 def transform_cart2hex_xy2ra(x, y):
     """Computes the transform from cartesian to hexagonal
 
@@ -334,6 +365,13 @@ def transform_cart2hex_xy2ra(x, y):
             the radius of the hexagon (always nonnegative) (the circumradius, not the apothem) and 
             the 'angle' is in the range [0,1) and increases linearly when the cartesian point is moved linearly along an oriented hexagon (with top and bottom aligned parallel to x-axis)
     """
+    if y==0:
+        if x>0:
+            return (x,0)
+        elif x==0:
+            return (0,0)
+        else:
+            return (-x,.5)
     r = None
     a = None
     root3 = math.sqrt(3)
