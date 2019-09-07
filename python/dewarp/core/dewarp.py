@@ -17,7 +17,7 @@ from dewarp.utils import ioutils
 from dewarp.utils import imgutils
 import pkg_resources
 
-def dewarp(fiducialsimgfile, fibersimgfile, fpslayoutfilename=None, trueradius=350, observeradius=2500):
+def dewarp(fiducialsimgfile, fibersimgfile, fpslayoutfilename=None, fpsradius=350):
     """Computes the optical warp based on an image of fiducials and applys it to an image of fibers
     
     Parameters:
@@ -27,6 +27,8 @@ def dewarp(fiducialsimgfile, fibersimgfile, fpslayoutfilename=None, trueradius=3
             path to a fits image file containing illuminated metrology fibers (must have '.fits' extension)
         fpslayoutfilename (str):
             path to a config file containing fiducial positions (probably has '.txt' extension)
+        fpsradius (float):
+            the radius (nonnegative) that all the dots are within, in whatever units the file would like (probably mm)
 
     Returns:
         xys (list):
@@ -34,21 +36,19 @@ def dewarp(fiducialsimgfile, fibersimgfile, fpslayoutfilename=None, trueradius=3
     """
     if fpslayoutfilename is None:
         fpslayoutfilename = pkg_resources.resource_filename('dewarp', 'etc/fps_RTConfig.txt')
-    coefs = detectwarp(fpslayoutfilename, trueradius, fiducialsimgfile, observeradius)
+    coefs = detectwarp(fpslayoutfilename, fpsradius, fiducialsimgfile)
     return applywarp(coefs, fibersimgfile)
 
-def detectwarp(fpslayoutfilename=None, fiducialradius=350, infilename=None, imageradius=2500):
+def detectwarp(fpslayoutfilename=None, fpsradius=350, infilename=None):
     """Computes the optical warp of an image based on fiducials
     
     Parameters:
         fpslayoutfilename (str):
             path to a config file containing fiducial positions (probably has '.txt' extension)
-        fiducialradius (float):
+        fpsradius (float):
             the radius (nonnegative) that all the dots are within, in whatever units the file would like (probably mm)
         infilename (str):
             path to a fits image file (must have '.fits' extension)
-        imageradius (float):
-            the radius (nonnegative) that all the dots in the image are within, in pixels
 
     Returns:
         coefs (warpcoefs):
@@ -59,14 +59,14 @@ def detectwarp(fpslayoutfilename=None, fiducialradius=350, infilename=None, imag
     if infilename is None:
         infilename = pkg_resources.resource_filename('dewarp', 'etc/simulatedwarpedfiducials.fits')
     ideal_xys = ioutils.fiducial_xys_from_file(fpslayoutfilename)
-    ideal_xys = opticsmath.unitize_xys(ideal_xys, fiducialradius)
+    ideal_xys = opticsmath.unitize_xys(ideal_xys, fpsradius)
     imgdata = imgutils.readimage(infilename)
-    observed_xys = imgutils.centroids(imgdata)
-    observed_xys = opticsmath.unitize_xys(observed_xys, imageradius)
+    observed_xys = imgutils.unitdiskcentroids(imgdata)
     observed_xys = opticsmath.sort_closest(observed_xys, ideal_xys)
-    return opticsmath.warpcoefs(observed_xys, ideal_xys, .01)
+    coefs = opticsmath.warpcoefs(observed_xys, ideal_xys, .01)
+    return coefs
 
-def applywarp(coefs, infilename=None, observedradius=2500):
+def applywarp(coefs, infilename=None):
     """Applys optical warp to an image
     
     Parameters:
@@ -82,20 +82,19 @@ def applywarp(coefs, infilename=None, observedradius=2500):
     if infilename is None:
         infilename = pkg_resources.resource_filename('dewarp', 'etc/simulatedwarpedfiducials.fits')
     imgdata = imgutils.readimage(infilename)
-    xys = imgutils.centroids(imgdata)
-    xys = opticsmath.unitize_xys(xys, observedradius)
+    xys = imgutils.unitdiskcentroids(imgdata)
     return coefs.applytransform(xys)
 
-def fakewarp(fpslayoutfilename=None, radius=350, whichinstrument='fiducial', outfilename=None):
+def fakewarp(fpslayoutfilename=None, fpsradius=350, whichinstruments=lambda x:x.lower()=='fiducial', outfilename=None, width=8192, height=5210, bgIntensity=3, bgGaussMean=2, bgGaussStdDev=1, superGaussPeak_min=190, superGaussPeak_max=210, superGaussAWAM_min=1, superGaussAWAM_max=2, superGaussHWHM_dmin=1, superGaussHWHM_dmax=4, coefs=None):
     """Generates a warped image based on a configuration file
     
     Parameters:
         fpslayoutfilename (str):
             the path to a config file containing positions of instruments (probably has '.txt' extension)
-        radius (float):
+        fpsradius (float):
             the radius (nonnegative) that all the dots are within, in whatever units the file would like (probably mm)
-        whichinstrument (str):
-            the (case ignorant) name of the instruments to draw
+        whichinstruments (lambda function of str):
+            returns True if evaluated at the name of an instrument to include
         outfilename (str):
             the path to a (possibly nonexistent, overwrites of exists) fits image file (must have '.fits' extension)
     """
@@ -103,6 +102,6 @@ def fakewarp(fpslayoutfilename=None, radius=350, whichinstrument='fiducial', out
         fpslayoutfilename = pkg_resources.resource_filename('dewarp', 'etc/fps_RTConfig.txt')
     if outfilename is None:
         outfilename = 'img.fits'
-    xys = ioutils.specific_instrument_entries_from_file(fpslayoutfilename, lambda x: x.lower()==whichinstrument, [2,3])
-    xys = opticsmath.unitize_xys(xys, radius)
-    imgutils.genimg(xys, outfilename=outfilename)
+    xys = ioutils.specific_instrument_entries_from_file(fpslayoutfilename, whichinstruments, [2,3])
+    xys = opticsmath.unitize_xys(xys, fpsradius)
+    imgutils.genimg(xys, width=8192, height=5210, outfilename=outfilename, bgIntensity=bgIntensity, bgGaussMean=bgGaussMean, bgGaussStdDev=bgGaussStdDev, superGaussPeak_min=superGaussPeak_min, superGaussPeak_max=superGaussPeak_max, superGaussAWAM_min=superGaussAWAM_min, superGaussAWAM_max=superGaussAWAM_max, superGaussHWHM_dmin=superGaussHWHM_dmin, superGaussHWHM_dmax=superGaussHWHM_dmax, coefs=coefs)

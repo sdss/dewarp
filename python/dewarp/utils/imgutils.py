@@ -66,15 +66,51 @@ def centroids(data):
             a list of interleaved xy positions
             these are the positions of the centroids in the image
     """
-    centroids, stats = PyGuide.findStars(data, None, None, PyGuide.CCDInfo(2176, 19, 2.1), thresh=40, radMult=1.0, rad=None, verbosity=0, doDS9=False)
-    print('DONE CENTROIDING')
+    centroids, stats = PyGuide.findStars(data, None, None, PyGuide.CCDInfo(2176, 19, 2.1), thresh=10, radMult=1.0, rad=None, verbosity=0, doDS9=False)
     out = []
     for centroid in centroids:
         out.append(centroid.xyCtr[0])
         out.append(centroid.xyCtr[1])
     return out
 
-def genimg(unitary_xys, width=8192, height=5210, outfilename='simulatedwarpedfiducials.fits', bgIntensity=3, bgGaussMean=2, bgGaussStdDev=1, superGaussPeak_min=190, superGaussPeak_max=210, superGaussAWAM_min=1, superGaussAWAM_max=2, superGaussHWHM_dmin=1, superGaussHWHM_dmax=4, maxn=2):
+def centeredcentroids(data):
+    """Finds centroids in an image, with (0,0) at the center of the image
+    Parameters:
+        data (ndarray):
+            a 2d numpy array containing image data, assumed to be x row major
+    
+    Returns:
+        xys (list):
+            a list of interleaved xy positions
+            these are the positions of the centroids in the image
+    """
+    centroids, stats = PyGuide.findStars(data, None, None, PyGuide.CCDInfo(2176, 19, 2.1), thresh=10, radMult=1.0, rad=None, verbosity=0, doDS9=False)
+    out = []
+    for centroid in centroids:
+        out.append(centroid.xyCtr[0]-data.shape[1]/2)
+        out.append(centroid.xyCtr[1]-data.shape[0]/2)
+    return out
+
+def unitdiskcentroids(data):
+    """Finds centroids in an image, with (0,0) at the center of the image and the largest possible circle around this (0,0) having magnitude 1
+    Parameters:
+        data (ndarray):
+            a 2d numpy array containing image data, assumed to be x row major
+    
+    Returns:
+        xys (list):
+            a list of interleaved xy positions
+            these are the positions of the centroids in the image
+    """
+    centroids, stats = PyGuide.findStars(data, None, None, PyGuide.CCDInfo(2176, 19, 2.1), thresh=10, radMult=1.0, rad=None, verbosity=0, doDS9=False)
+    out = []
+    scale = min(data.shape[0],data.shape[1])/2
+    for centroid in centroids:
+        out.append((centroid.xyCtr[0]-data.shape[1]/2)/scale)
+        out.append((centroid.xyCtr[1]-data.shape[0]/2)/scale)
+    return out
+
+def genimg(unitary_xys, width=8192, height=5210, outfilename='simulatedwarpedfiducials.fits', bgIntensity=3, bgGaussMean=2, bgGaussStdDev=1, superGaussPeak_min=190, superGaussPeak_max=210, superGaussAWAM_min=1, superGaussAWAM_max=2, superGaussHWHM_dmin=1, superGaussHWHM_dmax=4, coefs=None):
     """Draws a warped theoretical image of dots
     
     assumes the list unitary_xys contains interleaved xy coordinates of dots to draw, all within the unit square
@@ -129,7 +165,9 @@ def genimg(unitary_xys, width=8192, height=5210, outfilename='simulatedwarpedfid
     bgGaussMean = float(bgGaussMean) #in addition to bgIntensity, set to 0 to add and subtract equally likely and overall add no intensity
     bgGaussStdDev = float(bgGaussStdDev) #bigger means bigger spread (means more random), set to 0 to have no randomness
     units2Pixels = min(width,height)/2 #radius not diameter...
-    coefs = opticsmath.warpcoefs()
+    if coefs is None:
+        coefs = opticsmath.warpcoefs()
+        coefs.randomizetransform(3)
 
 
 
@@ -141,11 +179,6 @@ def genimg(unitary_xys, width=8192, height=5210, outfilename='simulatedwarpedfid
     gaussExponents = numpy.divide(numpy.log2(8-numpy.log2(3)-numpy.log2(5)-numpy.log2(17)),numpy.log2(gaussAWAMs)-numpy.log2(gaussHWHMs))
     relevantRadii = numpy.ceil(numpy.multiply(gaussHWHMs,numpy.power(numpy.log2(255*gaussPeaks),numpy.divide(1,gaussExponents)))).astype('uint32')
     print('We have %d dots'%(len(unitary_xys)/2))
-
-
-
-    print('Computing optical distortions')
-    coefs.randomizetransform(int(maxn))
 
 
 
