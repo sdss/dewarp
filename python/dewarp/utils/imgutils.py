@@ -116,6 +116,35 @@ def unitdiskcentroids(data, mask=None):
         out.append((centroid.xyCtr[1]-data.shape[0]/2)/scale)
     return out
 
+def genmask(ideal_xys, width, height, dilation=80, outfilename=None):
+    """Creates a binary numpy array with 1s everywhere except in a radius around the ideal_xys
+    
+    The smaller of width and height is taken to be the diameter where points with coordinates of magnitude 1 would be
+
+    Parameters:
+        ideal_xys (list):
+            an interleaved array of xy coordanates, each point must be in the range [-1,1] cross [-1,1]
+        width,height (int):
+            dimensions of the mask to generate in pixels
+        dilation (float):
+            the radius of the squares around the points to be 0
+        outfilename (str):
+            a fits file to write the mask to (or not if None)
+
+    Returns:
+        img (ndarray):
+            a binary numpy array with dimensions width,height
+    """
+    rad = min(width,height)/2
+    mask = numpy.ones((width, height))
+    for i in range(0,len(ideal_xys),2):
+        x = int(round(ideal_xys[i]*rad+width/2))
+        y = int(round(ideal_xys[i+1]*rad+height/2))
+        mask[max(0,x-dilation):min(mask.shape[0]-1,x+dilation):1,max(0,y-dilation):min(mask.shape[1]-1,y+dilation):1] = 0
+    if outfilename is not None:
+        writetoimage(outfilename, mask)
+    return mask
+
 def genimg(unitary_xys, width=8192, height=5210, outfilename='simulatedwarpedfiducials.fits', bgIntensity=3, bgGaussMean=2, bgGaussStdDev=1, superGaussPeak_min=190, superGaussPeak_max=210, superGaussAWAM_min=1, superGaussAWAM_max=2, superGaussHWHM_dmin=1, superGaussHWHM_dmax=4, coefs=None):
     """Draws a warped theoretical image of dots
     

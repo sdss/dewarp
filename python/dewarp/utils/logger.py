@@ -31,7 +31,6 @@ from .color_print import color_text
 
 __all__ = ['get_logger']
 
-
 def get_exception_formatted(tp, value, tb):
     """Adds colours to tracebacks."""
 
@@ -217,7 +216,6 @@ class SDSSLogger(logging.Logger):
 
         if self.fh:
             self.fh.setLevel(level)
-
 
 def get_logger(name, **kwargs):
     """Gets a new logger."""

@@ -17,7 +17,8 @@ import os
 import sys
 
 from .core.dewarp import *
-from .utils import get_config
+from . import log
+from .utils.configuration import get_config
 from .utils import opticsmath
 
 if __name__ == '__main__':
@@ -27,9 +28,9 @@ if __name__ == '__main__':
         description='computes, applies and/or fakes warp of fiducial/metrology fiber dots')
     
     parser.add_argument('-ofid', '--observefiducialimage', type=str, help='path to fits image containing illuminated fiducials')
-    #parser.add_argument('-mfid', '--maskfiducial', type=str, help='')
+    parser.add_argument('-mfid', '--maskfiducial', type=str, help='')
     parser.add_argument('-ofib', '--observefiberimage', type=str, help='path to fits image containing illuminated fibers')
-    #parser.add_argument('-mfib', '--maskfiber', type=str, help='')
+    parser.add_argument('-mfib', '--maskfiber', type=str, help='')
 
     parser.add_argument('-ifid', '--idealfiduciallayout', type=str, help='path to config file containing fiducials')
     parser.add_argument('-irad', '--idealradius', type=float, help='the radius of the focal plane system, all instruments in the config file must be within this radius')
@@ -49,29 +50,47 @@ if __name__ == '__main__':
     parser.add_argument('-iimgdegu',    '--idealimagewarpcoefsdegreelub',                  dest='iimgdegu',     type=float, help='all basis functions of this degree and lower are randomized to warp the generated image', default=4)
 
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='sets verbose mode')
+    parser.add_argument('-d', '--debug', action='store_true', default=False, help='sets debug mode')
     
     args = parser.parse_args()
+    
+    if args.debug:
+        log.setLevel(-1)
+    elif args.verbose:
+        log.setLevel(10)
 
     coefs = None
     if args.iimg is not None and args.idealfiduciallayout is not None:
         if args.idealradius is None:
             args.idealradius = 350
-        if args.verbose:
-            print('generating image from layout',args.idealfiduciallayout,'and putting it into',args.iimg)
         coefs = opticsmath.warpcoefs()
+        log.info('randomizing warp coefficients, up to degree '+args.iimgdegu)
         coefs.randomizetransform(args.iimgdegu)
+        log.info('generating image from layout '+args.idealfiduciallayout+' and putting it into '+args.iimg)
         fakewarp(fpslayoutfilename=args.idealfiduciallayout, fpsradius=args.idealradius, whichinstruments=lambda a:a.lower()=='fiducial', outfilename=args.iimg, width=args.iimgw, height=args.iimgh, bgIntensity=args.iimgbg, bgGaussMean=args.iimgbgmean, bgGaussStdDev=args.iimgbgstddv, superGaussPeak_min=args.iimgsgpl, superGaussPeak_max=args.iimgsgpu, superGaussAWAM_min=args.iimgsgawaml, superGaussAWAM_max=args.iimgsgawamu, superGaussHWHM_dmin=args.iimgsghwhml, superGaussHWHM_dmax=args.iimgsghwhmu, coefs=coefs)
     elif args.observefiducialimage is not None and args.idealfiduciallayout is not None:
         if args.idealradius is None:
             args.idealradius = 350
-        if args.verbose:
-            print('detecting warp in',args.observefiducialimage,'with reference to config file',args.idealfiduciallayout)
-        coefs = detectwarp(args.idealfiduciallayout, args.idealradius, args.observefiducialimage)
+        readmask = False
+        genmask = False
+        if args.maskfiducial is not None:
+            genmask = True
+            if os.path.exists(args.maskfiducial) and os.path.isfile(args.maskfiducial):
+                readmask = True
+        log.info('detecting warp in '+args.observefiducialimage+' with reference to config file '+args.idealfiduciallayout)
+        coefs = detectwarp(args.idealfiduciallayout, args.idealradius, args.observefiducialimage, args.maskfiducial, readmask, genmask)
 
     if coefs is not None:
         if args.observefiberimage is not None:
-            hopefullytruexys = applywarp(coefs, args.observefiberimage)
-            print('dewarped')
+            readmask = False
+            genmask = False
+            if args.maskfiber is not None:
+                genmask = True
+                if os.path.exists(args.maskfiber) and os.path.isfile(args.maskfiber):
+                    readmask = True
+            log.info('applying computed warp to '+args.observefiberimage)
+            hopefullytruexys = applywarp(coefs, args.observefiberimage, args.maskfiber, readmask, genmask)
+            log.info('done applying warp, displaying')
             import matplotlib.pyplot as p
             p.scatter(hopefullytruexys[0::2],hopefullytruexys[1::2])
             p.show()

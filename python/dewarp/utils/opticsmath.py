@@ -304,6 +304,38 @@ def polypder2d(poly, wrtX_otherwise_wrtY):
     else:
         return numpy.multiply(numpy.tile(  numpy.arange(1,poly.shape[1]),poly.shape[0]).reshape((poly.shape[0],  poly.shape[1]-1)),poly[::, 1::])
 
+def center_xys(xys, tx, ty):
+    """Translates xys to be centered
+    
+    if tx is None, finds exact average to center on x axis
+    if ty is None, finds exact average to center on y axis
+
+    (you shouldn't let these be None, you should know the proper center to translate to)
+
+    Parameters:
+        xys (list):
+            a list of interleaved x y coordinates
+        tx (float):
+            how much to translate the xys along the x axis
+        ty (float):
+            how much to translate the xys along the y axis
+    
+    Returns:
+        result (list):
+            a list of interleaved x y coordinates
+    """
+    if len(xys)==0:
+        return []
+    if tx is None:
+        tx = -sum(xys[0::2])/(len(xys)/2)
+    if ty is None:
+        ty = -sum(xys[1::2])/(len(xys)/2)
+    out = []
+    for i in range(0,len(xys),2):
+        out.append(xys[i]+tx)
+        out.append(xys[i+1]+ty)
+    return out
+
 def unitize_xys(xys, radius):
     """Scales xys to be in the unit disk
     
