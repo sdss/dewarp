@@ -55,54 +55,60 @@ def readimage(filename):
         data = hdul[0].data
     return data
 
-def centroids(data):
+def centroids(data, mask=None):
     """Finds centroids in an image
     Parameters:
         data (ndarray):
             a 2d numpy array containing image data, assumed to be x row major
+        mask (ndarray):
+            a 2d numpy array containing binary image data (0 for do process and 1 for don't)
     
     Returns:
         xys (list):
             a list of interleaved xy positions
             these are the positions of the centroids in the image
     """
-    centroids, stats = PyGuide.findStars(data, None, None, PyGuide.CCDInfo(2176, 19, 2.1), thresh=10, radMult=1.0, rad=None, verbosity=0, doDS9=False)
+    centroids, stats = PyGuide.findStars(data, mask, None, PyGuide.CCDInfo(2176, 19, 2.1), thresh=10, radMult=1.0, rad=None, verbosity=0, doDS9=False)
     out = []
     for centroid in centroids:
         out.append(centroid.xyCtr[0])
         out.append(centroid.xyCtr[1])
     return out
 
-def centeredcentroids(data):
+def centeredcentroids(data, mask=None):
     """Finds centroids in an image, with (0,0) at the center of the image
     Parameters:
         data (ndarray):
             a 2d numpy array containing image data, assumed to be x row major
+        mask (ndarray):
+            a 2d numpy array containing binary image data (0 for do process and 1 for don't)
     
     Returns:
         xys (list):
             a list of interleaved xy positions
             these are the positions of the centroids in the image
     """
-    centroids, stats = PyGuide.findStars(data, None, None, PyGuide.CCDInfo(2176, 19, 2.1), thresh=10, radMult=1.0, rad=None, verbosity=0, doDS9=False)
+    centroids, stats = PyGuide.findStars(data, mask, None, PyGuide.CCDInfo(2176, 19, 2.1), thresh=10, radMult=1.0, rad=None, verbosity=0, doDS9=False)
     out = []
     for centroid in centroids:
         out.append(centroid.xyCtr[0]-data.shape[1]/2)
         out.append(centroid.xyCtr[1]-data.shape[0]/2)
     return out
 
-def unitdiskcentroids(data):
+def unitdiskcentroids(data, mask=None):
     """Finds centroids in an image, with (0,0) at the center of the image and the largest possible circle around this (0,0) having magnitude 1
     Parameters:
         data (ndarray):
             a 2d numpy array containing image data, assumed to be x row major
+        mask (ndarray):
+            a 2d numpy array containing binary image data (0 for do process and 1 for don't)
     
     Returns:
         xys (list):
             a list of interleaved xy positions
             these are the positions of the centroids in the image
     """
-    centroids, stats = PyGuide.findStars(data, None, None, PyGuide.CCDInfo(2176, 19, 2.1), thresh=10, radMult=1.0, rad=None, verbosity=0, doDS9=False)
+    centroids, stats = PyGuide.findStars(data, mask, None, PyGuide.CCDInfo(2176, 19, 2.1), thresh=10, radMult=1.0, rad=None, verbosity=0, doDS9=False)
     out = []
     scale = min(data.shape[0],data.shape[1])/2
     for centroid in centroids:
