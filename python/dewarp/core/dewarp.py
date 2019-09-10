@@ -17,7 +17,7 @@ from dewarp.utils import ioutils
 from dewarp.utils import imgutils
 import pkg_resources
 
-def dewarp(fiducialsimgfile, fibersimgfile, fpslayoutfilename=None, fpsradius=350):
+def dewarp(fiducialsimgfile, fibersimgfile, fpslayoutfilename=None, fpsradius=350, genmask=True):
     """Computes the optical warp based on an image of fiducials and applys it to an image of fibers
     
     Parameters:
@@ -36,10 +36,10 @@ def dewarp(fiducialsimgfile, fibersimgfile, fpslayoutfilename=None, fpsradius=35
     """
     if fpslayoutfilename is None:
         fpslayoutfilename = pkg_resources.resource_filename('dewarp', 'etc/fps_RTConfig.txt')
-    coefs = detectwarp(fpslayoutfilename, fpsradius, fiducialsimgfile)
+    coefs = detectwarp(fpslayoutfilename, fpsradius, fiducialsimgfile, genmask=genmask)
     return applywarp(coefs, fibersimgfile)
 
-def detectwarp(fpslayoutfilename=None, fpsradius=350, infilename=None):
+def detectwarp(fpslayoutfilename=None, fpsradius=350, infilename=None, genmask=True, maskdilation=80):
     """Computes the optical warp of an image based on fiducials
     
     Parameters:
@@ -61,7 +61,18 @@ def detectwarp(fpslayoutfilename=None, fpsradius=350, infilename=None):
     ideal_xys = ioutils.fiducial_xys_from_file(fpslayoutfilename)
     ideal_xys = opticsmath.unitize_xys(ideal_xys, fpsradius)
     imgdata = imgutils.readimage(infilename)
-    observed_xys = imgutils.unitdiskcentroids(imgdata)
+    if genmask:
+        mask = numpy.ones(imgdata.shape)
+        for i in range(0,len(ideal_xys),2):
+            x = ideal_xys[i]
+            y = ideal_xys[i+1]
+            mask[max(0,x-maskdilation):min(mask.shape[0]-1,x+maskdilation):1,max(0,y-maskdilation):min(mask.shape[1]-1,y+maskdilation):1] = 1
+        imgutils.writetoimage(pkg_resources.resource_filename('dewarp', 'etc/mask.fits'), mask)
+    else:
+        mask = imgutils.readimage(pkg_resources.resource_filename('dewarp', 'etc/mask.fits'))
+    if mask.shape[0]!=imgdata.shape[0] or mask.shape[1]!=imgdata.shape[1]:
+        mask = None
+    observed_xys = imgutils.unitdiskcentroids(imgdata, mask)
     observed_xys = opticsmath.sort_closest(observed_xys, ideal_xys)
     coefs = opticsmath.warpcoefs(observed_xys, ideal_xys, .01)
     return coefs
@@ -81,8 +92,11 @@ def applywarp(coefs, infilename=None):
     """
     if infilename is None:
         infilename = pkg_resources.resource_filename('dewarp', 'etc/simulatedwarpedfiducials.fits')
+    mask = imgutils.readimage(pkg_resources.resource_filename('dewarp', 'etc/mask.fits'))
     imgdata = imgutils.readimage(infilename)
-    xys = imgutils.unitdiskcentroids(imgdata)
+    if mask.shape[0]!=imgdata.shape[0] or mask.shape[1]!=imgdata.shape[1]:
+        mask = None
+    xys = imgutils.unitdiskcentroids(imgdata, mask)
     return coefs.applytransform(xys)
 
 def fakewarp(fpslayoutfilename=None, fpsradius=350, whichinstruments=lambda x:x.lower()=='fiducial', outfilename=None, width=8192, height=5210, bgIntensity=3, bgGaussMean=2, bgGaussStdDev=1, superGaussPeak_min=190, superGaussPeak_max=210, superGaussAWAM_min=1, superGaussAWAM_max=2, superGaussHWHM_dmin=1, superGaussHWHM_dmax=4, coefs=None):
