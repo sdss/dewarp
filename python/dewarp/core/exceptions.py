@@ -24,6 +24,12 @@ class DewarpError(Exception):
 
         super(DewarpError, self).__init__(message)
 
+class DewarpCandFindProperDotsError(DewarpError):
+    def __init__(self, message=None):
+        if not message:
+            message = 'Error finding dots'
+        else:
+            message = 'Error finding dots. '+message
 
 class DewarpNotImplemented(DewarpError):
     """A custom exception for not yet implemented features."""
@@ -35,7 +41,6 @@ class DewarpNotImplemented(DewarpError):
 
         super(DewarpNotImplemented, self).__init__(message)
 
-
 class DewarpAPIError(DewarpError):
     """A custom exception for API errors"""
 
@@ -46,7 +51,6 @@ class DewarpAPIError(DewarpError):
             message = 'Http response error from Dewarp API. {0}'.format(message)
 
         super(DewarpAPIError, self).__init__(message)
-
 
 class DewarpApiAuthError(DewarpAPIError):
     """A custom exception for API authentication errors"""

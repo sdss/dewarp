@@ -15,6 +15,7 @@ from __future__ import unicode_literals
 from dewarp.utils import opticsmath
 from dewarp.utils import ioutils
 from dewarp.utils import imgutils
+from dewarp.core.exceptions import *
 from dewarp import log
 import numpy
 import pkg_resources
@@ -100,10 +101,10 @@ def detectwarp(fpslayoutfilename=None, fpsradius=350, infilename=None, maskfilen
             log.warn('ideally there are '+str(int(len(ideal_xys)/2))+' dots but found '+str(int(len(observed_xys)/2))+', trying again with no mask')
             observed_xys = imgutils.centroids(imgdata, None)
             if len(observed_xys)!=len(ideal_xys):
-                log.error("SDKFJLKSDFJLSDKJFLSDKFJSLDKFJSDLFKJSDLFKJSLDKFJSLFKJSDLFKJSDLFKJSDLFKJSLDFKJSDLFKJSDLFKJSDLFKJSDLFKJSDLFKJS")
-            else
+                raise DewarpCandFindProperDotsError('tried without mask, expected '+str(int(len(ideal_xys)/2))+', found '+str(int(len(observed_xys)/2)))
+            else:
                 log.warn('succeeded with no mask')
-        log.error("SDKFJLKSDFJLSDKJFLSDKFJSLDKFJSDLFKJSDLFKJSLDKFJSLFKJSDLFKJSDLFKJSDLFKJSLDFKJSDLFKJSDLFKJSDLFKJSDLFKJSDLFKJS")
+        raise DewarpCandFindProperDotsError('tried without mask, expected '+str(int(len(ideal_xys)/2))+', found '+str(int(len(observed_xys)/2)))
     orig_observed_xys = [a for a in observed_xys]
     observed_xys = opticsmath.unitize_xys(observed_xys, min(imgdata.shape[0],imgdata.shape[1])/2)
     observed_xys = opticsmath.center_xys(observed_xys, -.5, -.5)
